@@ -18,12 +18,15 @@ server.listen(port, () => {
 
 const io = socketIO(server, {
   handlePreflightRequest: function(req, res) {
-    var headers = {
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Access-Control-Allow-Origin": req.header ? req.header.origin : "*",
-      "Access-Control-Allow-Credentials": true
-    };
-    res.writeHead(200, headers);
+    // TODO T67532013
+    if (req.hostname.endsWith('thefacebook.com')) {
+      var headers = {
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Origin": req.header ? req.header.origin : "*",
+        "Access-Control-Allow-Credentials": true
+      };
+      res.writeHead(200, headers);
+    }
     res.end();
   }
 });
@@ -32,6 +35,10 @@ io.on("connection", socket => {
   ioDebug("connection established!");
   io.to(`${socket.id}`).emit("init-room");
   socket.on("join-room", roomID => {
+
+    // TODO T67531929
+    // Check if the room exists, if it does not then exit early here
+
     socketDebug(`${socket.id} has joined ${roomID}`);
     socket.join(roomID);
     if (io.sockets.adapter.rooms[roomID].length <= 1) {
